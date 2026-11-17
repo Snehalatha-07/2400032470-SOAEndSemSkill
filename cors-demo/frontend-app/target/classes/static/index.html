@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CORS Demo Frontend</title>
+  <style>
+    body{font-family:Arial,sans-serif;max-width:720px;margin:30px auto;padding:0 15px}
+    button{padding:8px 14px;margin:4px 4px 4px 0;cursor:pointer}
+    pre{background:#f4f4f4;padding:12px;border-radius:6px;white-space:pre-wrap}
+    .ok{color:#0a7d2c;font-weight:bold}.err{color:#b00020;font-weight:bold}
+  </style>
+</head>
+<body>
+  <h2>CORS Demo</h2>
+  <p>Frontend origin: <code id="me"></code><br>
+     API origin: <code>http://localhost:8080</code></p>
+
+  <button onclick="getProfile()">GET /profile</button>
+  <button onclick="putProfile()">PUT /profile</button>
+  <button onclick="deleteProfile()">DELETE /profile</button>
+
+  <h3>Result</h3>
+  <div id="status"></div>
+  <pre id="out">Click a button...</pre>
+
+  <script>
+    const API = "http://localhost:8080/profile";
+    document.getElementById("me").textContent = location.origin;
+
+    function show(ok, msg, body){
+      document.getElementById("status").innerHTML =
+        '<span class="'+(ok?'ok':'err')+'">'+msg+'</span>';
+      document.getElementById("out").textContent = body;
+    }
+    function fail(e){
+      show(false, "BLOCKED / FAILED",
+        e + "\n\nOpen DevTools (F12) -> Console/Network.\n" +
+        "You should see: 'has been blocked by CORS policy'.");
+    }
+
+    async function getProfile(){
+      try{
+        const r = await fetch(API);
+        show(true, "SUCCESS (HTTP "+r.status+")", JSON.stringify(await r.json(), null, 2));
+      }catch(e){ fail(e); }
+    }
+
+    async function putProfile(){
+      try{
+        const r = await fetch(API, {
+          method:"PUT",
+          headers:{"Content-Type":"application/json"},   // triggers a preflight (OPTIONS)
+          body: JSON.stringify({name:"Updated User", email:"updated@example.com", role:"Developer"})
+        });
+        show(true, "SUCCESS (HTTP "+r.status+")", JSON.stringify(await r.json(), null, 2));
+      }catch(e){ fail(e); }
+    }
+
+    async function deleteProfile(){
+      try{
+        const r = await fetch(API, {method:"DELETE"});
+        show(true, "SUCCESS (HTTP "+r.status+")", await r.text());
+      }catch(e){ fail(e); }
+    }
+  </script>
+</body>
+</html>
